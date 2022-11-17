@@ -51,6 +51,17 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 				Requires: []libcnb.BuildPlanRequire{
 					{Name: "dynatrace-dotnet"},
 					{Name: "dotnet-runtime"},
+					{Name: "node"},
+				},
+			},
+			{
+				Provides: []libcnb.BuildPlanProvide{
+					{Name: "dynatrace-dotnet"},
+				},
+				Requires: []libcnb.BuildPlanRequire{
+					{Name: "dynatrace-dotnet"},
+					{Name: "dotnet-core-aspnet-runtime"},
+					{Name: "node"},
 				},
 			},
 			{
