@@ -98,6 +98,7 @@ func (Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) 
 				Requires: []libcnb.BuildPlanRequire{
 					{Name: "dynatrace-nodejs"},
 					{Name: "node"},
+					{Name: "node_modules"},
 				},
 			},
 			{

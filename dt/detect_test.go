@@ -66,15 +66,15 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					},
 				},
 				{
-                                	Provides: []libcnb.BuildPlanProvide{
-                                        	{Name: "dynatrace-dotnet"},
-                                },
-                                	Requires: []libcnb.BuildPlanRequire{
-                                        	{Name: "dynatrace-dotnet"},
-                                        	{Name: "dotnet-core-aspnet-runtime"},
-                                        	{Name: "node"},
-                                	},
-                                },
+					Provides: []libcnb.BuildPlanProvide{
+						{Name: "dynatrace-dotnet"},
+					},
+					Requires: []libcnb.BuildPlanRequire{
+						{Name: "dynatrace-dotnet"},
+						{Name: "dotnet-core-aspnet-runtime"},
+						{Name: "node"},
+					},
+				},
 				{
 					Provides: []libcnb.BuildPlanProvide{
 						{Name: "dynatrace-go"},
@@ -109,6 +109,7 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 					Requires: []libcnb.BuildPlanRequire{
 						{Name: "dynatrace-nodejs"},
 						{Name: "node"},
+						{Name: "node_modules"},
 					},
 				},
 				{
