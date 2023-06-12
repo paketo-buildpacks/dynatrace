@@ -26,6 +26,87 @@ import (
 	"github.com/paketo-buildpacks/dynatrace/v4/dt"
 )
 
+var expectedResult = libcnb.DetectResult{
+	Pass: true,
+	Plans: []libcnb.BuildPlan{
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-apache"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-apache"},
+				{Name: "httpd"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-dotnet"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-dotnet"},
+				{Name: "dotnet-runtime"},
+				{Name: "node"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-dotnet"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-dotnet"},
+				{Name: "dotnet-core-aspnet-runtime"},
+				{Name: "node"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-go"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-go"},
+				{Name: "go"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-java"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-java"},
+				{Name: "jvm-application"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-nginx"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-nginx"},
+				{Name: "nginx"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-nodejs"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-nodejs"},
+				{Name: "node"},
+				{Name: "node_modules"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-php"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-php"},
+				{Name: "php"},
+			},
+		},
+	},
+}
+
 func testDetect(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
@@ -34,94 +115,59 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		detect dt.Detect
 	)
 
-	it("fails without service", func() {
-		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{}))
+	it("fails detection without service", func() {
+		actualResult, err := detect.Detect(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(actualResult.Pass).To(BeFalse())
+		Expect(actualResult).To(Equal(libcnb.DetectResult{}))
 	})
 
-	it("passes with service", func() {
+	it("passes with service of type dynatrace", func() {
 		ctx.Platform.Bindings = libcnb.Bindings{
 			{Name: "test-service", Type: "Dynatrace"},
 		}
 
-		Expect(detect.Detect(ctx)).To(Equal(libcnb.DetectResult{
-			Pass: true,
-			Plans: []libcnb.BuildPlan{
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-apache"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-apache"},
-						{Name: "httpd"},
-					},
-				},
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-dotnet"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-dotnet"},
-						{Name: "dotnet-runtime"},
-						{Name: "node"},
-					},
-				},
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-dotnet"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-dotnet"},
-						{Name: "dotnet-core-aspnet-runtime"},
-						{Name: "node"},
-					},
-				},
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-go"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-go"},
-						{Name: "go"},
-					},
-				},
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-java"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-java"},
-						{Name: "jvm-application"},
-					},
-				},
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-nginx"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-nginx"},
-						{Name: "nginx"},
-					},
-				},
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-nodejs"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-nodejs"},
-						{Name: "node"},
-						{Name: "node_modules"},
-					},
-				},
-				{
-					Provides: []libcnb.BuildPlanProvide{
-						{Name: "dynatrace-php"},
-					},
-					Requires: []libcnb.BuildPlanRequire{
-						{Name: "dynatrace-php"},
-						{Name: "php"},
-					},
-				},
-			},
-		}))
+		actualResult, err := detect.Detect(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(actualResult.Pass).To(BeTrue())
+		Expect(actualResult).To(Equal(expectedResult))
 	})
+
+	it("passes with service with name dynatrace", func() {
+		ctx.Platform.Bindings = libcnb.Bindings{
+			{Name: "Dynatrace", Type: "user-provided"},
+		}
+
+		actualResult, err := detect.Detect(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(actualResult.Pass).To(BeTrue())
+		Expect(actualResult).To(Equal(expectedResult))
+	})
+
+	it("passes with services with name and of type dynatrace", func() {
+		ctx.Platform.Bindings = libcnb.Bindings{
+			{Name: "Dynatrace", Type: "user-provided"},
+			{Name: "provided", Type: "Dynatrace"},
+		}
+
+		actualResult, err := detect.Detect(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(actualResult.Pass).To(BeTrue())
+		Expect(actualResult).To(Equal(expectedResult))
+	})
+
+	it("errors with multiple services with name dynatrace", func() {
+		ctx.Platform.Bindings = libcnb.Bindings{
+			{Name: "Dynatrace", Type: "user-provided"},
+			{Name: "Dynatrace", Type: "user-provided"},
+		}
+
+		_, err := detect.Detect(ctx)
+		Expect(err).To(MatchError(ContainSubstring("unable to resolve")))
+	})
+
 }

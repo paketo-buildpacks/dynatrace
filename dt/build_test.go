@@ -30,6 +30,39 @@ import (
 	"github.com/paketo-buildpacks/dynatrace/v4/dt"
 )
 
+const stackId = "test-stack-id"
+
+func getExpectedDependency(serverUrl string) libpak.BuildpackDependency {
+	return libpak.BuildpackDependency{
+		ID:      "dynatrace-oneagent",
+		Name:    "Dynatrace OneAgent",
+		Version: "test-version",
+		URI:     fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&include=java&include=php", serverUrl),
+		Stacks:  []string{stackId},
+		PURL:    "pkg:generic/dynatrace-one-agent@test-version?arch=amd64",
+		CPEs:    []string{"cpe:2.3:a:dynatrace:one-agent:test-version:*:*:*:*:*:*:*"},
+	}
+}
+
+func verifyBOM(bom *libcnb.BOM) {
+	ExpectWithOffset(1, bom.Entries).To(HaveLen(2))
+	ExpectWithOffset(1, bom.Entries[0].Name).To(Equal("dynatrace-oneagent"))
+	ExpectWithOffset(1, bom.Entries[0].Launch).To(BeTrue())
+	ExpectWithOffset(1, bom.Entries[0].Build).To(BeFalse())
+	ExpectWithOffset(1, bom.Entries[1].Name).To(Equal("helper"))
+	ExpectWithOffset(1, bom.Entries[1].Launch).To(BeTrue())
+	ExpectWithOffset(1, bom.Entries[1].Build).To(BeFalse())
+
+}
+
+func verifyLayers(layers []libcnb.LayerContributor, serverUrl string) {
+	ExpectWithOffset(1, layers).To(HaveLen(2))
+	ExpectWithOffset(1, layers[0].Name()).To(Equal("dynatrace-oneagent"))
+	ExpectWithOffset(1, layers[0].(dt.Agent).LayerContributor.Dependency).To(Equal(getExpectedDependency(serverUrl)))
+	ExpectWithOffset(1, layers[1].Name()).To(Equal("helper"))
+	ExpectWithOffset(1, layers[1].(libpak.HelperLayerContributor).Names).To(Equal([]string{"properties"}))
+}
+
 func testBuild(t *testing.T, context spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
@@ -44,6 +77,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 
 		ctx.Buildpack.Info.ID = "test-id"
 		ctx.Buildpack.Info.Version = "test-version"
+		ctx.StackID = stackId
 		ctx.Buildpack.API = "0.7"
 
 		ctx.Platform.Bindings = libcnb.Bindings{
@@ -56,6 +90,17 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 				},
 			},
 		}
+
+		server.AppendHandlers(ghttp.CombineHandlers(
+			ghttp.VerifyRequest("GET", "/v1/deployment/installer/agent/unix/paas/latest/metainfo"),
+			ghttp.VerifyHeaderKV("Authorization", "Api-Token test-api-token"),
+			ghttp.VerifyHeaderKV("User-Agent", "test-id/test-version"),
+			ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{"latestAgentVersion": "test-version"}),
+		))
+
+		ctx.Plan.Entries = append(ctx.Plan.Entries,
+			libcnb.BuildpackPlanEntry{Name: "dynatrace-java"},
+			libcnb.BuildpackPlanEntry{Name: "dynatrace-php"})
 	})
 
 	it.After(func() {
@@ -63,81 +108,46 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 	})
 
 	it("contributes agent for API 0.7+", func() {
-		server.AppendHandlers(ghttp.CombineHandlers(
-			ghttp.VerifyRequest("GET", "/v1/deployment/installer/agent/unix/paas/latest/metainfo"),
-			ghttp.VerifyHeaderKV("Authorization", "Api-Token test-api-token"),
-			ghttp.VerifyHeaderKV("User-Agent", "test-id/test-version"),
-			ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{"latestAgentVersion": "test-version"}),
-		))
-
-		ctx.Plan.Entries = append(ctx.Plan.Entries,
-			libcnb.BuildpackPlanEntry{Name: "dynatrace-java"},
-			libcnb.BuildpackPlanEntry{Name: "dynatrace-php"})
-		ctx.StackID = "test-stack-id"
-
 		result, err := dt.Build{}.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(result.Layers).To(HaveLen(2))
-		Expect(result.Layers[0].Name()).To(Equal("dynatrace-oneagent"))
-		Expect(result.Layers[0].(dt.Agent).LayerContributor.Dependency).To(Equal(libpak.BuildpackDependency{
-			ID:      "dynatrace-oneagent",
-			Name:    "Dynatrace OneAgent",
-			Version: "test-version",
-			URI:     fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&include=java&include=php", server.URL()),
-			Stacks:  []string{ctx.StackID},
-			PURL:    "pkg:generic/dynatrace-one-agent@test-version?arch=amd64",
-			CPEs:    []string{"cpe:2.3:a:dynatrace:one-agent:test-version:*:*:*:*:*:*:*"},
-		}))
-		Expect(result.Layers[1].Name()).To(Equal("helper"))
-		Expect(result.Layers[1].(libpak.HelperLayerContributor).Names).To(Equal([]string{"properties"}))
-
-		Expect(result.BOM.Entries).To(HaveLen(2))
-		Expect(result.BOM.Entries[0].Name).To(Equal("dynatrace-oneagent"))
-		Expect(result.BOM.Entries[0].Launch).To(BeTrue())
-		Expect(result.BOM.Entries[0].Build).To(BeFalse())
-		Expect(result.BOM.Entries[1].Name).To(Equal("helper"))
-		Expect(result.BOM.Entries[1].Launch).To(BeTrue())
-		Expect(result.BOM.Entries[1].Build).To(BeFalse())
+		verifyLayers(result.Layers, server.URL())
+		verifyBOM(result.BOM)
 	})
-	it("contributes agent for API <= 0.6", func() {
-		server.AppendHandlers(ghttp.CombineHandlers(
-			ghttp.VerifyRequest("GET", "/v1/deployment/installer/agent/unix/paas/latest/metainfo"),
-			ghttp.VerifyHeaderKV("Authorization", "Api-Token test-api-token"),
-			ghttp.VerifyHeaderKV("User-Agent", "test-id/test-version"),
-			ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{"latestAgentVersion": "test-version"}),
-		))
 
-		ctx.Plan.Entries = append(ctx.Plan.Entries,
-			libcnb.BuildpackPlanEntry{Name: "dynatrace-java"},
-			libcnb.BuildpackPlanEntry{Name: "dynatrace-php"})
-		ctx.StackID = "test-stack-id"
+	it("contributes agent for API <= 0.6", func() {
 		ctx.Buildpack.API = "0.6"
 
 		result, err := dt.Build{}.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(result.Layers).To(HaveLen(2))
-		Expect(result.Layers[0].Name()).To(Equal("dynatrace-oneagent"))
-		Expect(result.Layers[0].(dt.Agent).LayerContributor.Dependency).To(Equal(libpak.BuildpackDependency{
-			ID:      "dynatrace-oneagent",
-			Name:    "Dynatrace OneAgent",
-			Version: "test-version",
-			URI:     fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&include=java&include=php", server.URL()),
-			Stacks:  []string{ctx.StackID},
-			PURL:    "pkg:generic/dynatrace-one-agent@test-version?arch=amd64",
-			CPEs:    []string{"cpe:2.3:a:dynatrace:one-agent:test-version:*:*:*:*:*:*:*"},
-		}))
-		Expect(result.Layers[1].Name()).To(Equal("helper"))
-		Expect(result.Layers[1].(libpak.HelperLayerContributor).Names).To(Equal([]string{"properties"}))
+		verifyLayers(result.Layers, server.URL())
+		verifyBOM(result.BOM)
+	})
 
-		Expect(result.BOM.Entries).To(HaveLen(2))
-		Expect(result.BOM.Entries[0].Name).To(Equal("dynatrace-oneagent"))
-		Expect(result.BOM.Entries[0].Launch).To(BeTrue())
-		Expect(result.BOM.Entries[0].Build).To(BeFalse())
-		Expect(result.BOM.Entries[1].Name).To(Equal("helper"))
-		Expect(result.BOM.Entries[1].Launch).To(BeTrue())
-		Expect(result.BOM.Entries[1].Build).To(BeFalse())
+	it("prefers binding with matching name over type", func() {
+		ctx.Platform.Bindings = append(ctx.Platform.Bindings, libcnb.Binding{
+			Name: "Dynatrace",
+			Type: "user-provided",
+			Secret: map[string]string{
+				"api-token": "custom-api-token",
+				"api-url":   server.URL(),
+			},
+		},
+		)
+
+		server.SetHandler(0, ghttp.CombineHandlers(
+			ghttp.VerifyRequest("GET", "/v1/deployment/installer/agent/unix/paas/latest/metainfo"),
+			ghttp.VerifyHeaderKV("Authorization", "Api-Token custom-api-token"),
+			ghttp.VerifyHeaderKV("User-Agent", "test-id/test-version"),
+			ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{"latestAgentVersion": "test-version"}),
+		))
+
+		result, err := dt.Build{}.Build(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		verifyLayers(result.Layers, server.URL())
+		verifyBOM(result.BOM)
 	})
 
 }

@@ -43,9 +43,15 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	}
 	dc.Logger = b.Logger
 
-	s, _, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("Dynatrace"))
+	s, bindingFound, err := bindings.ResolveOne(context.Platform.Bindings, bindings.WithName("Dynatrace"))
 	if err != nil {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding Dynatrace\n%w", err)
+	}
+	if !bindingFound {
+		s, _, err = bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("Dynatrace"))
+		if err != nil {
+			return libcnb.BuildResult{}, fmt.Errorf("unable to resolve binding Dynatrace\n%w", err)
+		}
 	}
 
 	v, err := b.AgentVersion(s, context.Buildpack.Info)

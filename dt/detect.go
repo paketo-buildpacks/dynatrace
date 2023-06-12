@@ -20,19 +20,21 @@ import (
 	"fmt"
 
 	"github.com/buildpacks/libcnb"
-	"github.com/paketo-buildpacks/libpak/bindings"
 	"github.com/paketo-buildpacks/libpak/bard"
+	"github.com/paketo-buildpacks/libpak/bindings"
 )
 
-type Detect struct{
+type Detect struct {
 	Logger bard.Logger
 }
 
 func (d Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
-	if _, ok, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("Dynatrace")); err != nil {
+	if _, nameFound, err := bindings.ResolveOne(context.Platform.Bindings, bindings.WithName("Dynatrace")); err != nil {
 		return libcnb.DetectResult{}, fmt.Errorf("unable to resolve binding Dynatrace\n%w", err)
-	} else if !ok {
-		d.Logger.Info("SKIPPED: No binding of type 'Dynatrace' found")
+	} else if _, typeFound, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("Dynatrace")); err != nil {
+		return libcnb.DetectResult{}, fmt.Errorf("unable to resolve binding Dynatrace\n%w", err)
+	} else if !nameFound && !typeFound {
+		d.Logger.Info("SKIPPED: No binding for 'Dynatrace' found (type or name)")
 		return libcnb.DetectResult{Pass: false}, nil
 	}
 
