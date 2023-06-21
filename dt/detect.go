@@ -29,11 +29,10 @@ type Detect struct {
 }
 
 func (d Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error) {
-	if _, nameFound, err := bindings.ResolveOne(context.Platform.Bindings, bindings.WithName("Dynatrace")); err != nil {
+	_, ok, err := bindings.ResolveOne(context.Platform.Bindings, IsDynatraceBinding)
+	if err != nil {
 		return libcnb.DetectResult{}, fmt.Errorf("unable to resolve binding Dynatrace\n%w", err)
-	} else if _, typeFound, err := bindings.ResolveOne(context.Platform.Bindings, bindings.OfType("Dynatrace")); err != nil {
-		return libcnb.DetectResult{}, fmt.Errorf("unable to resolve binding Dynatrace\n%w", err)
-	} else if !nameFound && !typeFound {
+	} else if !ok {
 		d.Logger.Info("SKIPPED: No binding for 'Dynatrace' found (type or name)")
 		return libcnb.DetectResult{Pass: false}, nil
 	}
