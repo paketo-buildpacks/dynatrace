@@ -2,14 +2,15 @@
 The Paketo Buildpack for Dynatrace is a Cloud Native Buildpack that contributes the Dynatrace OneAgent and configures it to connect to the service.
 
 ## Behavior
-This buildpack will participate if one the following conditions are met
+This buildpack will participate if either of the following conditions is met
 
-* A binding exists with `name` of `Dynatrace`
+* A binding exists with `name` containing `Dynatrace`
 * A binding exists with `type` of `Dynatrace`
+
+**Note**:  While a single binding may match both conditions, you may *not* have multiple bindings that match the conditions above. Multiple Dynatrace service bindings are not supported for a single application.
 
 **Note**: The binding must include the following required Secret values to successfully contribute Dynatrace
 
-**Note**: If both bindings (`name` **and** `type`) exist, the binding with `name` will have precedence.
 
 | Key | Value Description
 | -------------------- | -----------

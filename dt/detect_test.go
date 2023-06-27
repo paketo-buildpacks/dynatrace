@@ -147,27 +147,13 @@ func testDetect(t *testing.T, context spec.G, it spec.S) {
 		Expect(actualResult).To(Equal(expectedResult))
 	})
 
-	it("passes with services with name and of type dynatrace", func() {
+	it("fails with multiple matching services provided", func() {
 		ctx.Platform.Bindings = libcnb.Bindings{
 			{Name: "Dynatrace", Type: "user-provided"},
 			{Name: "provided", Type: "Dynatrace"},
 		}
 
-		actualResult, err := detect.Detect(ctx)
-		Expect(err).NotTo(HaveOccurred())
-
-		Expect(actualResult.Pass).To(BeTrue())
-		Expect(actualResult).To(Equal(expectedResult))
-	})
-
-	it("errors with multiple services with name dynatrace", func() {
-		ctx.Platform.Bindings = libcnb.Bindings{
-			{Name: "Dynatrace", Type: "user-provided"},
-			{Name: "Dynatrace", Type: "user-provided"},
-		}
-
 		_, err := detect.Detect(ctx)
 		Expect(err).To(MatchError(ContainSubstring("unable to resolve")))
 	})
-
 }

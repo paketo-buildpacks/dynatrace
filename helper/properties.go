@@ -36,7 +36,7 @@ type Properties struct {
 }
 
 func (p Properties) Execute() (map[string]string, error) {
-	b, ok, err := bindings.ResolveOne(p.Bindings, bindings.OfType("Dynatrace"))
+	b, ok, err := bindings.ResolveOne(p.Bindings, dt.IsDynatraceBinding)
 	if err != nil {
 		return nil, fmt.Errorf("unable to resolve binding Dynatrace\n%w", err)
 	} else if !ok {

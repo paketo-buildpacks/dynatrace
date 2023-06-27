@@ -125,16 +125,17 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		verifyBOM(result.BOM)
 	})
 
-	it("prefers binding with matching name over type", func() {
-		ctx.Platform.Bindings = append(ctx.Platform.Bindings, libcnb.Binding{
-			Name: "Dynatrace",
-			Type: "user-provided",
-			Secret: map[string]string{
-				"api-token": "custom-api-token",
-				"api-url":   server.URL(),
+	it("also takes named binding into account", func() {
+		ctx.Platform.Bindings = libcnb.Bindings{
+			{
+				Name: "DynatraceBinding",
+				Type: "user-provided",
+				Secret: map[string]string{
+					"api-token": "custom-api-token",
+					"api-url":   server.URL(),
+				},
 			},
-		},
-		)
+		}
 
 		server.SetHandler(0, ghttp.CombineHandlers(
 			ghttp.VerifyRequest("GET", "/v1/deployment/installer/agent/unix/paas/latest/metainfo"),
