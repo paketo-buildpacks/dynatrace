@@ -26,18 +26,30 @@ import (
 	"github.com/paketo-buildpacks/dynatrace/v4/dt"
 )
 
-func testBaseURI(t *testing.T, context spec.G, it spec.S) {
+func testBaseURI(t *testing.T, _ spec.G, it spec.S) {
 	var (
 		Expect = NewWithT(t).Expect
 	)
 
+	createBinding := func(keysAndValues ...string) libcnb.Binding {
+		Expect(len(keysAndValues)%2 == 0).To(BeTrue())
+
+		secrets := make(map[string]string, len(keysAndValues)/2)
+
+		for i := 0; i < len(keysAndValues); i = i + 2 {
+			secrets[keysAndValues[i]] = keysAndValues[i+1]
+		}
+
+		return libcnb.Binding{Secret: secrets}
+	}
+
 	it("uses api-url", func() {
-		Expect(dt.BaseURI(libcnb.Binding{Secret: map[string]string{"api-url": "test-url"}})).
+		Expect(dt.BaseURI(createBinding("api-url", "test-url"))).
 			To(Equal("test-url"))
 	})
 
 	it("uses environment-id", func() {
-		Expect(dt.BaseURI(libcnb.Binding{Secret: map[string]string{"environment-id": "test-id"}})).
+		Expect(dt.BaseURI(createBinding("environment-id", "test-id"))).
 			To(Equal("https://test-id.live.dynatrace.com/api"))
 	})
 }
