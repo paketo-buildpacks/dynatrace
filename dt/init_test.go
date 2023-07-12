@@ -27,6 +27,7 @@ func TestUnit(t *testing.T) {
 	suite := spec.New("dynatrace", spec.Report(report.Terminal{}))
 	suite("Agent", testAgent)
 	suite("BaseURI", testBaseURI)
+	suite("APIToken", testAPIToken)
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
 	suite.Run(t)

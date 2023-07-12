@@ -74,7 +74,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		CPEs:    []string{fmt.Sprintf("cpe:2.3:a:dynatrace:one-agent:%s:*:*:*:*:*:*:*", v)},
 	}
 
-	a, be := NewAgent(dep, dc, s.Secret["api-token"], context.Buildpack.Info)
+	a, be := NewAgent(dep, dc, APIToken(s), context.Buildpack.Info)
 	a.Logger = b.Logger
 	result.Layers = append(result.Layers, a)
 	result.BOM.Entries = append(result.BOM.Entries, be)
@@ -94,7 +94,7 @@ func (Build) AgentVersion(binding libcnb.Binding, info libcnb.BuildpackInfo) (st
 	if err != nil {
 		return "", fmt.Errorf("unable to create new GET request for %s\n%w", uri, err)
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Api-Token %s", binding.Secret["api-token"]))
+	req.Header.Set("Authorization", fmt.Sprintf("Api-Token %s", APIToken(binding)))
 	req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", info.ID, info.Version))
 
 	client := http.Client{Transport: &http.Transport{Proxy: http.ProxyFromEnvironment}}

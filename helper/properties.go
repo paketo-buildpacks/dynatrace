@@ -64,7 +64,7 @@ func (p Properties) Execute() (map[string]string, error) {
 		return nil, fmt.Errorf("unable to create new GET request for %s\n%w", uri, err)
 	}
 	req.Header.Set("User-Agent", fmt.Sprintf("%s/%s", id, version))
-	req.Header.Set("Authorization", fmt.Sprintf("Api-Token %s", b.Secret["api-token"]))
+	req.Header.Set("Authorization", fmt.Sprintf("Api-Token %s", dt.APIToken(b)))
 
 	client := http.Client{Transport: &http.Transport{Proxy: http.ProxyFromEnvironment}}
 	resp, err := client.Do(req)
@@ -92,7 +92,9 @@ func (p Properties) Execute() (map[string]string, error) {
 	e["DT_CONNECTION_POINT"] = strings.Join(raw.CommunicationsEndpoints, ";")
 
 	delete(b.Secret, "api-token")
+	delete(b.Secret, "apitoken")
 	delete(b.Secret, "api-url")
+	delete(b.Secret, "apiurl")
 	delete(b.Secret, "environment-id")
 
 	for k, v := range b.Secret {

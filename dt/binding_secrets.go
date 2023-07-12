@@ -26,5 +26,15 @@ func BaseURI(binding libcnb.Binding) string {
 	if s, ok := binding.Secret["api-url"]; ok {
 		return s
 	}
+	if s, ok := binding.Secret["apiurl"]; ok {
+		return s
+	}
 	return fmt.Sprintf("https://%s.live.dynatrace.com/api", binding.Secret["environment-id"])
+}
+
+func APIToken(binding libcnb.Binding) string {
+	if s, ok := binding.Secret["api-token"]; ok {
+		return s
+	}
+	return binding.Secret["apitoken"]
 }

@@ -151,4 +151,30 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		verifyBOM(result.BOM)
 	})
 
+	it("supports apitoken and apiurl", func() {
+		ctx.Platform.Bindings = libcnb.Bindings{
+			{
+				Name: "DynatraceBinding",
+				Type: "user-provided",
+				Secret: map[string]string{
+					"apitoken": "custom-apitoken",
+					"apiurl":   server.URL(),
+				},
+			},
+		}
+
+		server.SetHandler(0, ghttp.CombineHandlers(
+			ghttp.VerifyRequest("GET", "/v1/deployment/installer/agent/unix/paas/latest/metainfo"),
+			ghttp.VerifyHeaderKV("Authorization", "Api-Token custom-apitoken"),
+			ghttp.VerifyHeaderKV("User-Agent", "test-id/test-version"),
+			ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{"latestAgentVersion": "test-version"}),
+		))
+
+		result, err := dt.Build{}.Build(ctx)
+		Expect(err).NotTo(HaveOccurred())
+
+		verifyLayers(result.Layers, server.URL())
+		verifyBOM(result.BOM)
+	})
+
 }

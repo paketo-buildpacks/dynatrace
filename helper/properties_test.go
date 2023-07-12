@@ -144,6 +144,38 @@ func testProperties(t *testing.T, context spec.G, it spec.S) {
 						"DT_TEST_KEY":         "custom-test-value",
 					}))
 				})
+
+				it("contributes properties if apitoken and apiurl are used", func() {
+					p.Bindings = libcnb.Bindings{
+						{
+							Name: "DynatraceBinding",
+							Type: "user-provided",
+							Secret: map[string]string{
+								"apitoken": "custom-test-apitoken",
+								"apiurl":   server.URL(),
+								"test-key": "custom-test-value",
+							},
+						},
+					}
+
+					server.AppendHandlers(ghttp.CombineHandlers(
+						ghttp.VerifyRequest("GET", "/v1/deployment/installer/agent/connectioninfo"),
+						ghttp.VerifyHeaderKV("Authorization", "Api-Token custom-test-apitoken"),
+						ghttp.VerifyHeaderKV("User-Agent", "test-id/test-version"),
+						ghttp.RespondWithJSONEncoded(http.StatusOK, map[string]interface{}{
+							"tenantUUID":             "test-tenant-uuid",
+							"tenantToken":            "test-tenant-token",
+							"communicationEndpoints": []string{"test-communication-endpoint-1", "test-communication-endpoint-2"},
+						}),
+					))
+
+					Expect(p.Execute()).To(Equal(map[string]string{
+						"DT_CONNECTION_POINT": "test-communication-endpoint-1;test-communication-endpoint-2",
+						"DT_TENANT":           "test-tenant-uuid",
+						"DT_TENANTTOKEN":      "test-tenant-token",
+						"DT_TEST_KEY":         "custom-test-value",
+					}))
+				})
 			})
 		})
 	})
