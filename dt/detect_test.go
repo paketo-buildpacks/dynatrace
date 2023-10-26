@@ -104,6 +104,15 @@ var expectedResult = libcnb.DetectResult{
 				{Name: "php"},
 			},
 		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-python"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-python"},
+				{Name: "cpython"},
+			},
+		},
 	},
 }
 

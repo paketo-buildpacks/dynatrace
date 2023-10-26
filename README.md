@@ -23,7 +23,7 @@ The binding must include the following required Secret values to successfully co
 the API URL and API token secret keys support multiple casing options for ease of integration.
 This buildpack will choose to use `api-url` over `apiurl` and `api-token` over `apitoken` if both are set.
 
-The buildpack will do the following for .NET, Go, Apache HTTPd, Java, Nginx, NodeJS, and PHP applications:
+The buildpack will do the following for .NET, Go, Apache HTTPD, Java, Nginx, NodeJS, PHP and Python applications:
 
 * Contributes a OneAgent including the appropriate libraries to a layer and configures `$LD_PRELOAD` to use it
 * Sets `$DT_TENANT`, `$DT_TENANTTOKEN`, and `$DT_CONNECTION_POINT` at launch time.

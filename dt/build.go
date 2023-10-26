@@ -55,7 +55,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 
 	uri := fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true", BaseURI(s))
 
-	for _, t := range []string{"apache", "dotnet", "go", "java", "nginx", "nodejs", "php"} {
+	for _, t := range []string{"apache", "dotnet", "go", "java", "nginx", "nodejs", "php", "python"} {
 		if _, ok, err := pr.Resolve(fmt.Sprintf("dynatrace-%s", t)); err != nil {
 			return libcnb.BuildResult{}, fmt.Errorf("unable to resolve dynatrace-%s plan entry\n%w", t, err)
 		} else if ok {
