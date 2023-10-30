@@ -115,6 +115,15 @@ func (d Detect) Detect(context libcnb.DetectContext) (libcnb.DetectResult, error
 					{Name: "php"},
 				},
 			},
+			{
+				Provides: []libcnb.BuildPlanProvide{
+					{Name: "dynatrace-python"},
+				},
+				Requires: []libcnb.BuildPlanRequire{
+					{Name: "dynatrace-python"},
+					{Name: "cpython"},
+				},
+			},
 		},
 	}, nil
 }
