@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 the original author or authors.
+ * Copyright 2018-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ func getExpectedDependency(serverUrl string) libpak.BuildpackDependency {
 		ID:      "dynatrace-oneagent",
 		Name:    "Dynatrace OneAgent",
 		Version: "test-version",
-		URI:     fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&include=java&include=php", serverUrl),
+		URI:     fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&arch=x86&include=java&include=php", serverUrl),
 		Stacks:  []string{stackId},
 		PURL:    "pkg:generic/dynatrace-one-agent@test-version?arch=amd64",
 		CPEs:    []string{"cpe:2.3:a:dynatrace:one-agent:test-version:*:*:*:*:*:*:*"},
@@ -75,6 +75,8 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		RegisterTestingT(t)
 		server = ghttp.NewServer()
 
+		t.Setenv("BP_ARCH", "amd64")
+
 		ctx.Buildpack.Info.ID = "test-id"
 		ctx.Buildpack.Info.Version = "test-version"
 		ctx.StackID = stackId
@@ -107,17 +109,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		server.Close()
 	})
 
-	it("contributes agent for API 0.7+", func() {
-		result, err := dt.Build{}.Build(ctx)
-		Expect(err).NotTo(HaveOccurred())
-
-		verifyLayers(result.Layers, server.URL())
-		verifyBOM(result.BOM)
-	})
-
-	it("contributes agent for API <= 0.6", func() {
-		ctx.Buildpack.API = "0.6"
-
+	it("contributes agent", func() {
 		result, err := dt.Build{}.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 

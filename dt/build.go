@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 the original author or authors.
+ * Copyright 2018-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"runtime"
 
 	"github.com/buildpacks/libcnb"
 	"github.com/paketo-buildpacks/libpak"
@@ -53,9 +55,9 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		return libcnb.BuildResult{}, fmt.Errorf("unable to determine agent version\n%w", err)
 	}
 
-	uri := fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true", BaseURI(s))
+	uri := fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&arch=%s", BaseURI(s), archForDynatrace())
 
-	for _, t := range []string{"apache", "dotnet", "go", "java", "nginx", "nodejs", "php", "python"} {
+	for _, t := range []string{"apache", "dotnet", "go", "java", "nginx", "nodejs", "php", "all", "sdk", "envoy"} {
 		if _, ok, err := pr.Resolve(fmt.Sprintf("dynatrace-%s", t)); err != nil {
 			return libcnb.BuildResult{}, fmt.Errorf("unable to resolve dynatrace-%s plan entry\n%w", t, err)
 		} else if ok {
@@ -70,7 +72,7 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 		URI:     uri,
 		SHA256:  "",
 		Stacks:  []string{context.StackID},
-		PURL:    fmt.Sprintf("pkg:generic/dynatrace-one-agent@%s?arch=amd64", v),
+		PURL:    fmt.Sprintf("pkg:generic/dynatrace-one-agent@%s?arch=%s", v, archFromSystem()),
 		CPEs:    []string{fmt.Sprintf("cpe:2.3:a:dynatrace:one-agent:%s:*:*:*:*:*:*:*", v)},
 	}
 
@@ -117,4 +119,26 @@ func (Build) AgentVersion(binding libcnb.Binding, info libcnb.BuildpackInfo) (st
 	}
 
 	return raw.LatestAgentVersion, nil
+}
+
+func archFromSystem() string {
+	archFromEnv, ok := os.LookupEnv("BP_ARCH")
+	if !ok {
+		archFromEnv = runtime.GOARCH
+	}
+
+	return archFromEnv
+}
+
+func archForDynatrace() string {
+	archFromEnv := archFromSystem()
+
+	// https://docs.dynatrace.com/docs/dynatrace-api/environment-api/deployment/oneagent/download-oneagent-version?secureweb=Teams
+	if (archFromEnv == "amd64") || (archFromEnv == "x86_64") {
+		return "x86"
+	} else if (archFromEnv == "aarch64") || (archFromEnv == "arm64") {
+		return "arm"
+	} else {
+		return "x86"
+	}
 }
