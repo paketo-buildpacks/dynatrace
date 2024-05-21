@@ -44,6 +44,18 @@ func getExpectedDependency(serverUrl string) libpak.BuildpackDependency {
 	}
 }
 
+func getExpectedAllDependency(serverUrl string) libpak.BuildpackDependency {
+	return libpak.BuildpackDependency{
+		ID:      "dynatrace-oneagent",
+		Name:    "Dynatrace OneAgent",
+		Version: "test-version",
+		URI:     fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&arch=arm&include=all", serverUrl),
+		Stacks:  []string{stackId},
+		PURL:    "pkg:generic/dynatrace-one-agent@test-version?arch=arm64",
+		CPEs:    []string{"cpe:2.3:a:dynatrace:one-agent:test-version:*:*:*:*:*:*:*"},
+	}
+}
+
 func verifyBOM(bom *libcnb.BOM) {
 	ExpectWithOffset(1, bom.Entries).To(HaveLen(2))
 	ExpectWithOffset(1, bom.Entries[0].Name).To(Equal("dynatrace-oneagent"))
@@ -55,10 +67,10 @@ func verifyBOM(bom *libcnb.BOM) {
 
 }
 
-func verifyLayers(layers []libcnb.LayerContributor, serverUrl string) {
+func verifyLayers(layers []libcnb.LayerContributor, serverUrl string, expectation func(string) libpak.BuildpackDependency) {
 	ExpectWithOffset(1, layers).To(HaveLen(2))
 	ExpectWithOffset(1, layers[0].Name()).To(Equal("dynatrace-oneagent"))
-	ExpectWithOffset(1, layers[0].(dt.Agent).LayerContributor.Dependency).To(Equal(getExpectedDependency(serverUrl)))
+	ExpectWithOffset(1, layers[0].(dt.Agent).LayerContributor.Dependency).To(Equal(expectation(serverUrl)))
 	ExpectWithOffset(1, layers[1].Name()).To(Equal("helper"))
 	ExpectWithOffset(1, layers[1].(libpak.HelperLayerContributor).Names).To(Equal([]string{"properties"}))
 }
@@ -113,7 +125,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		result, err := dt.Build{}.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
-		verifyLayers(result.Layers, server.URL())
+		verifyLayers(result.Layers, server.URL(), getExpectedDependency)
 		verifyBOM(result.BOM)
 	})
 
@@ -139,7 +151,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		result, err := dt.Build{}.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
-		verifyLayers(result.Layers, server.URL())
+		verifyLayers(result.Layers, server.URL(), getExpectedDependency)
 		verifyBOM(result.BOM)
 	})
 
@@ -165,8 +177,25 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		result, err := dt.Build{}.Build(ctx)
 		Expect(err).NotTo(HaveOccurred())
 
-		verifyLayers(result.Layers, server.URL())
+		verifyLayers(result.Layers, server.URL(), getExpectedDependency)
 		verifyBOM(result.BOM)
 	})
 
+	context("python", func() {
+		it.Before(func() {
+			t.Setenv("BP_ARCH", "arm64")
+
+			ctx.Plan.Entries = append(ctx.Plan.Entries,
+				libcnb.BuildpackPlanEntry{Name: "dynatrace-java"},
+				libcnb.BuildpackPlanEntry{Name: "dynatrace-python"})
+		})
+
+		it("contributes all agent", func() {
+			result, err := dt.Build{}.Build(ctx)
+			Expect(err).NotTo(HaveOccurred())
+
+			verifyLayers(result.Layers, server.URL(), getExpectedAllDependency)
+			verifyBOM(result.BOM)
+		})
+	})
 }
