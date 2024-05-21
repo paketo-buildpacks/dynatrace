@@ -57,11 +57,18 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 
 	uri := fmt.Sprintf("%s/v1/deployment/installer/agent/unix/paas/latest?bitness=64&skipMetadata=true&arch=%s", BaseURI(s), archForDynatrace())
 
-	for _, t := range []string{"apache", "dotnet", "go", "java", "nginx", "nodejs", "php", "all", "sdk", "envoy"} {
-		if _, ok, err := pr.Resolve(fmt.Sprintf("dynatrace-%s", t)); err != nil {
-			return libcnb.BuildResult{}, fmt.Errorf("unable to resolve dynatrace-%s plan entry\n%w", t, err)
-		} else if ok {
-			uri = fmt.Sprintf("%s&include=%s", uri, t)
+	// not presently a specific python module, but we include "all" then it should work with Python
+	if _, ok, err := pr.Resolve("dynatrace-python"); err != nil {
+		return libcnb.BuildResult{}, fmt.Errorf("unable to resolve dynatrace-python plan entry\n%w", err)
+	} else if ok {
+		uri = fmt.Sprintf("%s&include=all", uri)
+	} else {
+		for _, t := range []string{"apache", "dotnet", "go", "java", "nginx", "nodejs", "php"} {
+			if _, ok, err := pr.Resolve(fmt.Sprintf("dynatrace-%s", t)); err != nil {
+				return libcnb.BuildResult{}, fmt.Errorf("unable to resolve dynatrace-%s plan entry\n%w", t, err)
+			} else if ok {
+				uri = fmt.Sprintf("%s&include=%s", uri, t)
+			}
 		}
 	}
 
