@@ -31,6 +31,26 @@ var expectedResult = libcnb.DetectResult{
 	Plans: []libcnb.BuildPlan{
 		{
 			Provides: []libcnb.BuildPlanProvide{
+					{Name: "dynatrace-php"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+					{Name: "dynatrace-php"},
+					{Name: "php"},
+					{Name: "httpd"},
+			},
+		},	
+		{
+			Provides: []libcnb.BuildPlanProvide{
+				{Name: "dynatrace-php"},
+			},
+			Requires: []libcnb.BuildPlanRequire{
+				{Name: "dynatrace-php"},
+				{Name: "php"},
+				{Name: "nginx"},
+			},
+		},
+		{
+			Provides: []libcnb.BuildPlanProvide{
 				{Name: "dynatrace-apache"},
 			},
 			Requires: []libcnb.BuildPlanRequire{
