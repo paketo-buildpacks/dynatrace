@@ -1,4 +1,4 @@
-# `docker.io/paketobuildpacks/dynatrace`
+# `paketobuildpacks/dynatrace`
 The Paketo Buildpack for Dynatrace is a Cloud Native Buildpack that contributes the Dynatrace OneAgent and configures it to connect to the service.
 
 ## Behavior
@@ -15,7 +15,7 @@ The binding must include the following required Secret values to successfully co
 
 
 | Key                                           | Value Description                                                                                                                                                                                        |
-|-----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `api-url`<br/>  **or** <br/> `environment-id` | The base URL of the Dynatrace API. If not set, `environment-id` must be set. <br/> --- <br/> If `api-url` is not set, a URL is configured in the form: https://<`environment-id`>.live.dynatrace.com/api |
 | `api-token`                                   | (Required) The token for communicating with the Dynatrace service.                                                                                                                                       |
 
@@ -35,7 +35,7 @@ The buildpack optionally accepts the following bindings:
 
 ### Type: `dependency-mapping`
 | Key                   | Value   | Description                                                                                       |
-|-----------------------|---------|---------------------------------------------------------------------------------------------------|
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------- |
 | `<dependency-digest>` | `<uri>` | If needed, the buildpack will fetch the dependency with digest `<dependency-digest>` from `<uri>` |
 
 ## License
