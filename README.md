@@ -1,4 +1,7 @@
-# `paketobuildpacks/dynatrace`
+# Paketo Buildpack for Dynatrace
+
+## Buildpack ID: `paketo-buildpacks/dynatrace`
+## Registry URLs: `docker.io/paketobuildpacks/dynatrace `
 The Paketo Buildpack for Dynatrace is a Cloud Native Buildpack that contributes the Dynatrace OneAgent and configures it to connect to the service.
 
 ## Behavior
