@@ -56,7 +56,7 @@ func getExpectedAllDependency(serverUrl string) libpak.BuildpackDependency {
 	}
 }
 
-func verifyBOM(bom *libcnb.BOM) {
+func verifyBOM(bom *libcnb.BOM) { //nolint:staticcheck // hold off on the BOM migration for now
 	ExpectWithOffset(1, bom.Entries).To(HaveLen(2))
 	ExpectWithOffset(1, bom.Entries[0].Name).To(Equal("dynatrace-oneagent"))
 	ExpectWithOffset(1, bom.Entries[0].Launch).To(BeTrue())
@@ -126,7 +126,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		verifyLayers(result.Layers, server.URL(), getExpectedDependency)
-		verifyBOM(result.BOM)
+		verifyBOM(result.BOM) //nolint:staticcheck // hold off on the BOM migration for now
 	})
 
 	it("also takes named binding into account", func() {
@@ -152,7 +152,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		verifyLayers(result.Layers, server.URL(), getExpectedDependency)
-		verifyBOM(result.BOM)
+		verifyBOM(result.BOM) //nolint:staticcheck // hold off on the BOM migration for now
 	})
 
 	it("supports apitoken and apiurl", func() {
@@ -178,7 +178,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 		Expect(err).NotTo(HaveOccurred())
 
 		verifyLayers(result.Layers, server.URL(), getExpectedDependency)
-		verifyBOM(result.BOM)
+		verifyBOM(result.BOM) //nolint:staticcheck // hold off on the BOM migration for now
 	})
 
 	context("python", func() {
@@ -195,7 +195,7 @@ func testBuild(t *testing.T, context spec.G, it spec.S) {
 			Expect(err).NotTo(HaveOccurred())
 
 			verifyLayers(result.Layers, server.URL(), getExpectedAllDependency)
-			verifyBOM(result.BOM)
+			verifyBOM(result.BOM) //nolint:staticcheck // hold off on the BOM migration for now
 		})
 	})
 }

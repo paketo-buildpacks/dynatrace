@@ -53,7 +53,7 @@ func testIsDynatraceBinding(t *testing.T, context spec.G, it spec.S) {
 
 	it("returns true if the name contains dynatrace", func() {
 		result := dt.IsDynatraceBinding(libcnb.Binding{Name: "my-dynatrace-binding", Type: "user-provided"})
-		Expect(result).To(BeFalse())
+		Expect(result).To(BeTrue())
 	})
 
 }

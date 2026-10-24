@@ -39,9 +39,9 @@ func NewAgent(
 	cache libpak.DependencyCache,
 	apiToken string,
 	info libcnb.BuildpackInfo,
-) (Agent, libcnb.BOMEntry) {
+) (Agent, libcnb.BOMEntry) { //nolint:staticcheck // hold off on the BOM migration for now
 
-	contributor, entry := libpak.NewDependencyLayer(dependency, cache, libcnb.LayerTypes{
+	contributor, entry := libpak.NewDependencyLayer(dependency, cache, libcnb.LayerTypes{ //nolint:staticcheck // hold off on the BOM migration for now
 		Launch: true,
 	})
 	contributor.RequestModifierFuncs = append(contributor.RequestModifierFuncs,
@@ -64,7 +64,7 @@ func (a Agent) Contribute(layer libcnb.Layer) (libcnb.Layer, error) {
 	return a.LayerContributor.Contribute(layer, func(artifact *os.File) (libcnb.Layer, error) {
 		a.Logger.Bodyf("Expanding to %s", layer.Path)
 
-		if err := crush.ExtractZip(artifact, layer.Path, 0); err != nil {
+		if err := crush.Extract(artifact, layer.Path, 0); err != nil {
 			return libcnb.Layer{}, fmt.Errorf("unable to expand Dynatrace OneAgent\n%w", err)
 		}
 

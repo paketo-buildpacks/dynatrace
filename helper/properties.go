@@ -71,7 +71,7 @@ func (p Properties) Execute() (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to request %s\n%w", uri, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("could not download %s: %d", uri, resp.StatusCode)

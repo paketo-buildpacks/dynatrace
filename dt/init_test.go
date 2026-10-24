@@ -30,5 +30,6 @@ func TestUnit(t *testing.T) {
 	suite("APIToken", testAPIToken)
 	suite("Build", testBuild)
 	suite("Detect", testDetect)
+	suite("IsDynatraceBinding", testIsDynatraceBinding)
 	suite.Run(t)
 }
