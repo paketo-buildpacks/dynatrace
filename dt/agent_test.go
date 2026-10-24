@@ -18,7 +18,6 @@ package dt_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -45,7 +44,7 @@ func testAgent(t *testing.T, context spec.G, it spec.S) {
 		ctx.Buildpack.Info.ID = "test-id"
 		ctx.Buildpack.Info.Version = "test-version"
 
-		ctx.Layers.Path, err = ioutil.TempDir("", "java-agent-layers")
+		ctx.Layers.Path, err = os.MkdirTemp("", "java-agent-layers")
 		Expect(err).NotTo(HaveOccurred())
 	})
 

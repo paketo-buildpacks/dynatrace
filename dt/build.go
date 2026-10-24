@@ -86,12 +86,12 @@ func (b Build) Build(context libcnb.BuildContext) (libcnb.BuildResult, error) {
 	a, be := NewAgent(dep, dc, APIToken(s), context.Buildpack.Info)
 	a.Logger = b.Logger
 	result.Layers = append(result.Layers, a)
-	result.BOM.Entries = append(result.BOM.Entries, be)
+	result.BOM.Entries = append(result.BOM.Entries, be) //nolint:staticcheck // hold off on the BOM migration for now
 
-	h, be := libpak.NewHelperLayer(context.Buildpack, "properties")
+	h, be := libpak.NewHelperLayer(context.Buildpack, "properties") //nolint:staticcheck // hold off on the BOM migration for now
 	h.Logger = b.Logger
 	result.Layers = append(result.Layers, h)
-	result.BOM.Entries = append(result.BOM.Entries, be)
+	result.BOM.Entries = append(result.BOM.Entries, be) //nolint:staticcheck // hold off on the BOM migration for now
 
 	return result, nil
 }
@@ -111,7 +111,7 @@ func (Build) AgentVersion(binding libcnb.Binding, info libcnb.BuildpackInfo) (st
 	if err != nil {
 		return "", fmt.Errorf("unable to request %s\n%w", uri, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return "", fmt.Errorf("could not download %s: %d", uri, resp.StatusCode)
@@ -141,11 +141,12 @@ func archForDynatrace() string {
 	archFromEnv := archFromSystem()
 
 	// https://docs.dynatrace.com/docs/dynatrace-api/environment-api/deployment/oneagent/download-oneagent-version?secureweb=Teams
-	if (archFromEnv == "amd64") || (archFromEnv == "x86_64") {
+	switch archFromEnv {
+	case "amd64", "x86_64":
 		return "x86"
-	} else if (archFromEnv == "aarch64") || (archFromEnv == "arm64") {
+	case "aarch64", "arm64":
 		return "arm"
-	} else {
+	default:
 		return "x86"
 	}
 }
